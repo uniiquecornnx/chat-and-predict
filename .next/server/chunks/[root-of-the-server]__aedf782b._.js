@@ -120,15 +120,58 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$serv
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvice$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/algorithms/betAdvice.ts [app-route] (ecmascript)");
 ;
 ;
+const NODIT_ETH_ENDPOINT = 'https://web3.nodit.io/v1/ethereum/mainnet/token/getTokenPricesByContracts';
+const TOKEN_CONTRACTS = {
+    ETH: null,
+    WBTC: '0x2260FAC5E5542a773AaA73edC008A79646d1F9912',
+    WDOGE: '0x3832d2F059E55934220881F831bE501D180671A7',
+    WSOL: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
+    USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    SHIBA: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
+    TON: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
+    PEPE: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
+    BONK: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912'
+};
 async function POST(req) {
     try {
-        const { marketProbability, botProbability, marketOdds, bankroll, priceHistory } = await req.json();
-        if (typeof marketProbability !== 'number' || typeof botProbability !== 'number' || typeof marketOdds !== 'number') {
+        const { token, priceToken, marketProbability, botProbability, marketOdds, bankroll, priceHistory } = await req.json();
+        if (typeof marketProbability !== 'number' || typeof botProbability !== 'number' || typeof marketOdds !== 'number' || typeof token !== 'string') {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
                 error: 'Invalid input'
             }, {
                 status: 400
             });
+        }
+        let price = null;
+        const lookupToken = priceToken || token;
+        if (lookupToken === 'ETH') {
+            price = 3500;
+        } else {
+            const contract = TOKEN_CONTRACTS[lookupToken];
+            if (!contract) {
+                return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                    error: 'Unsupported token'
+                }, {
+                    status: 400
+                });
+            }
+            const noditRes = await fetch(NODIT_ETH_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'X-API-KEY': process.env.NODIT_API_KEY || '',
+                    'accept': 'application/json',
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contractAddresses: [
+                        contract
+                    ],
+                    currency: 'USD'
+                })
+            });
+            const noditData = await noditRes.json();
+            price = noditData?.data?.[0]?.price || null;
         }
         const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvice$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getBetAdvice"])({
             marketProbability,
@@ -137,7 +180,11 @@ async function POST(req) {
             bankroll,
             priceHistory
         });
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(result);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+            ...result,
+            price,
+            token
+        });
     } catch (error) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             error: error.message

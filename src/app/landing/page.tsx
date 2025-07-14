@@ -37,9 +37,21 @@ export default function ChatInterface() {
     return await response.json();
   }
 
-  // Function to call /api/analyze for bet advice
-  async function fetchBetAdvice() {
-    // For demo, use mock values
+  // Helper to map user token to price token for wrapped assets
+  function getPriceToken(token: string) {
+    const mapping: Record<string, string> = {
+      BTC: 'WBTC',
+      DOGE: 'WDOGE',
+      SOL: 'WSOL',
+      // Add more as needed
+    };
+    return mapping[token] || token;
+  }
+
+  // Function to call /api/analyze for bet advice with real token
+  async function fetchBetAdvice(token: string) {
+    const priceToken = getPriceToken(token);
+    // For demo, use mock values for probabilities/odds, but real token
     const marketProbability = 0.55; // 55% market implied
     const botProbability = 0.60;    // 60% bot model
     const marketOdds = 1.8;         // decimal odds
@@ -48,9 +60,31 @@ export default function ChatInterface() {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ marketProbability, botProbability, marketOdds, bankroll, priceHistory })
+      body: JSON.stringify({ token, priceToken, marketProbability, botProbability, marketOdds, bankroll, priceHistory })
     });
     return await response.json();
+  }
+
+  // Helper to parse action and token from user message
+  function parseActionAndToken(msg: string) {
+    const actions = ['long', 'short', 'buy', 'sell', 'longing', 'shorting'];
+    const tokens = ['SOL', 'ETH', 'BTC', 'AVAX', 'USDT', 'USDC', 'BNB', 'DOGE', 'MATIC', 'ADA', 'BONK' , 'PEPE' , 'TON' , 'SHIBA'];
+    const words = msg.toUpperCase().split(/\s+/);
+    let foundAction = null;
+    let foundToken = null;
+    for (let i = 0; i < words.length; i++) {
+      const wordLower = words[i].toLowerCase();
+      if (actions.includes(wordLower)) {
+        foundAction = wordLower;
+        // Look for token after action
+        if (i + 1 < words.length && tokens.includes(words[i + 1])) {
+          foundToken = words[i + 1];
+        }
+      } else if (tokens.includes(words[i])) {
+        foundToken = words[i];
+      }
+    }
+    return { action: foundAction, token: foundToken };
   }
 
   // Updated handleSendMessage to use keyword matching and bet advice
@@ -72,6 +106,8 @@ export default function ChatInterface() {
     let botMessage: Message;
 
     try {
+      // Parse action and token
+      const { action, token } = parseActionAndToken(inputValue);
       if (msg.includes('block number')) {
         const noditData = await fetchBlockNumber();
         botMessage = {
@@ -80,14 +116,22 @@ export default function ChatInterface() {
           sender: 'bot',
           timestamp: new Date()
         };
-      } else if (msg.includes('long') || msg.includes('short')) {
-        const advice = await fetchBetAdvice();
+      } else if (action && token) {
+        const advice = await fetchBetAdvice(token);
         botMessage = {
           id: (Date.now() + 2).toString(),
-          text: `Here's my analysis of your bet:\n\n` +
-            `🤑 Odds: ${advice.oddsAdvice}\n` +
-            `💰 Stake: ${advice.stakeAdvice}\n` +
-            `📈 Trend: ${advice.trendAdvice}\n` +
+          text: `You want to ${action} ${token}.
+` +
+            (advice.price ? `Current price: $${advice.price}\n` : '') +
+            `Here's my analysis of your bet:
+
+` +
+            `🤑 Odds: ${advice.oddsAdvice}
+` +
+            `💰 Stake: ${advice.stakeAdvice}
+` +
+            `📈 Trend: ${advice.trendAdvice}
+` +
             `💬 Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
