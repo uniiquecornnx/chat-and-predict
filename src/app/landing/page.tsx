@@ -22,6 +22,38 @@ export default function ChatInterface() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Function to call Nodit API via backend for eth_blockNumber
+  async function fetchBlockNumber() {
+    const response = await fetch('/api/nodit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_blockNumber",
+        params: [],
+        id: 1
+      })
+    });
+    return await response.json();
+  }
+
+  // Function to call /api/analyze for bet advice
+  async function fetchBetAdvice() {
+    // For demo, use mock values
+    const marketProbability = 0.55; // 55% market implied
+    const botProbability = 0.60;    // 60% bot model
+    const marketOdds = 1.8;         // decimal odds
+    const bankroll = 1000;          // user bankroll (optional)
+    const priceHistory = [1.7, 1.8, 2.1]; // mock odds history
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ marketProbability, botProbability, marketOdds, bankroll, priceHistory })
+    });
+    return await response.json();
+  }
+
+  // Updated handleSendMessage to use keyword matching and bet advice
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -36,17 +68,51 @@ export default function ChatInterface() {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate bot response (we'll replace this with real API call later)
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I'm analyzing your bet... This is a placeholder response. The real analysis will come from the backend API! 📊",
-        sender: 'bot',
-        timestamp: new Date()
-      };
+    const msg = inputValue.toLowerCase();
+    let botMessage: Message;
+
+    try {
+      if (msg.includes('block number')) {
+        const noditData = await fetchBlockNumber();
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          text: `Avalanche Fuji block number: ${noditData.result}`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+      } else if (msg.includes('long') || msg.includes('short')) {
+        const advice = await fetchBetAdvice();
+        botMessage = {
+          id: (Date.now() + 2).toString(),
+          text: `Here's my analysis of your bet:\n\n` +
+            `🤑 Odds: ${advice.oddsAdvice}\n` +
+            `💰 Stake: ${advice.stakeAdvice}\n` +
+            `📈 Trend: ${advice.trendAdvice}\n` +
+            `💬 Sentiment: ${advice.sentimentAdvice}`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+      } else {
+        botMessage = {
+          id: (Date.now() + 3).toString(),
+          text: "I'm not sure how to help with that yet. Try asking for the block number or tell me if you want to go long or short on a token!",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+      }
       setMessages(prev => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1500);
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 4).toString(),
+          text: "Sorry, something went wrong while processing your request. Please try again or rephrase your question.",
+          sender: 'bot',
+          timestamp: new Date()
+        }
+      ]);
+    }
+    setIsLoading(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
