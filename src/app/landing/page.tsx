@@ -123,15 +123,9 @@ export default function ChatInterface() {
           text: `You want to ${action} ${token}.
 ` +
             (advice.price ? `Current price: $${advice.price}\n` : '') +
-            `Here's my analysis of your bet:
-
-` +
-            `🤑 Odds: ${advice.oddsAdvice}
-` +
-            `💰 Stake: ${advice.stakeAdvice}
-` +
-            `📈 Trend: ${advice.trendAdvice}
-` +
+            `Here's my analysis of your bet:\n\n` +
+            `🤑 Odds: ${advice.oddsAdvice}\n` +
+            `📈 Trend: ${advice.trendAdvice}\n` +
             `💬 Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
