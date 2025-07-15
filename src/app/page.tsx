@@ -28,7 +28,7 @@ export default function Home() {
         onClick={handleClick}
         className="px-8 py-4 rounded-2xl text-2xl font-bold text-white bg-gradient-to-r from-purple-600 via-blue-500 to-emerald-600 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-400/50"
       >
-        Let's Chat and Predict
+        Let&apos;s Chat and Predict
       </button>
     </div>
   );
