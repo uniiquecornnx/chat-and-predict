@@ -26,18 +26,18 @@ export function getBetAdvice(input: BetAdviceInput): BetAdviceResult {
   }
 
   // (B) Stake Size Advice (Kelly Criterion)
-  let stakeAdvice = '';
-  if (input.bankroll && input.marketOdds > 1) {
-    // Kelly formula: f* = (bp - q) / (odds - 1), where b = odds - 1, p = botProbability, q = 1 - p
-    const b = input.marketOdds - 1;
-    const p = input.botProbability;
-    const q = 1 - p;
-    const kelly = (b * p - q) / b;
-    const percent = Math.max(0, Math.round(kelly * 100));
-    stakeAdvice = `Optimal stake: ${percent}% of your bankroll.`;
-  } else {
-    stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
-  }
+  // Remove or comment out 'stakeAdvice' if it is not used
+  // if (input.bankroll && input.marketOdds > 1) {
+  //   // Kelly formula: f* = (bp - q) / (odds - 1), where b = odds - 1, p = botProbability, q = 1 - p
+  //   const b = input.marketOdds - 1;
+  //   const p = input.botProbability;
+  //   const q = 1 - p;
+  //   const kelly = (b * p - q) / b;
+  //   const percent = Math.max(0, Math.round(kelly * 100));
+  //   stakeAdvice = `Optimal stake: ${percent}% of your bankroll.`;
+  // } else {
+  //   stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
+  // }
 
   // (C) Market Trends (improved)
   let trendAdvice = '';

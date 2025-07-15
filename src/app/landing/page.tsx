@@ -125,8 +125,7 @@ export default function ChatInterface() {
 ` +
             (advice.price ? `Current price: $${advice.price}\n` : '') +
             `Here's my analysis of your bet:\n\n` +
-            ` Odds: ${advice.oddsAdvice}\n` +
-            ` Trend: ${advice.trendAdvice}\n` +
+            ` Trend (7d): ${advice.trendAdvice}\n` +
             ` Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()

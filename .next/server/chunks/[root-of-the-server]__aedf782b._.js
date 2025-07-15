@@ -67,23 +67,23 @@ function getBetAdvice(input) {
     const edge = input.botProbability - input.marketProbability;
     let oddsAdvice = '';
     if (edge > 0) {
-        oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it.";
+        oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it 🤑.";
     } else {
-        oddsAdvice = "Careful! The market is overpricing this. Risk is higher than reward.";
+        oddsAdvice = "Careful! The market is overpricing this. Risk is higher than reward ⚠️.";
     }
     // (B) Stake Size Advice (Kelly Criterion)
-    let stakeAdvice = '';
-    if (input.bankroll && input.marketOdds > 1) {
-        // Kelly formula: f* = (bp - q) / (odds - 1), where b = odds - 1, p = botProbability, q = 1 - p
-        const b = input.marketOdds - 1;
-        const p = input.botProbability;
-        const q = 1 - p;
-        const kelly = (b * p - q) / b;
-        const percent = Math.max(0, Math.round(kelly * 100));
-        stakeAdvice = `Optimal stake: ${percent}% of your bankroll.`;
-    } else {
-        stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
-    }
+    // Remove or comment out 'stakeAdvice' if it is not used
+    // if (input.bankroll && input.marketOdds > 1) {
+    //   // Kelly formula: f* = (bp - q) / (odds - 1), where b = odds - 1, p = botProbability, q = 1 - p
+    //   const b = input.marketOdds - 1;
+    //   const p = input.botProbability;
+    //   const q = 1 - p;
+    //   const kelly = (b * p - q) / b;
+    //   const percent = Math.max(0, Math.round(kelly * 100));
+    //   stakeAdvice = `Optimal stake: ${percent}% of your bankroll.`;
+    // } else {
+    //   stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
+    // }
     // (C) Market Trends (improved)
     let trendAdvice = '';
     if (input.priceHistory && input.priceHistory.length > 1) {
@@ -127,7 +127,15 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvi
 ;
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ALCHEMY_PRICE_HISTORY_ENDPOINT = `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/historical`;
-const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
+const COINGECKO_IDS = {
+    SOL: 'solana',
+    BONK: 'bonk',
+    BTC: 'bitcoin',
+    DOGE: 'dogecoin',
+    HYPE: 'hyperliquid',
+    PENGU: 'pudgy-penguins',
+    PUMP: 'pump-fun'
+};
 const TOKEN_CONTRACTS = {
     ETH: null,
     WBTC: '0x2260FAC5E5542a773AaA73edC008A79646d1F9912',
@@ -137,15 +145,6 @@ const TOKEN_CONTRACTS = {
     SHIBA: '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE',
     PEPE: '0x6982508145454Ce325dDbE47a25d4ec3d2311933',
     TON: '0x2e9d63788249371f1dfc918a52f8d799f4a38c94'
-};
-const COINGECKO_IDS = {
-    SOL: 'solana',
-    BONK: 'bonk',
-    BTC: 'bitcoin',
-    DOGE: 'dogecoin',
-    HYPE: 'hyperliquid',
-    PENGU: 'pudgy-penguins',
-    PUMP: 'pump-fun'
 };
 function calculateMovingAverage(prices, window) {
     if (prices.length < window) return null;
@@ -284,7 +283,7 @@ async function POST(req) {
         let botProbability = 0.6; // fallback
         let ma7 = null;
         const lookupToken = priceToken || token;
-        let contract = TOKEN_CONTRACTS[lookupToken];
+        const contract = TOKEN_CONTRACTS[lookupToken];
         // Fetch current price using Nodit, fallback to CoinGecko
         price = await fetchCurrentPriceNodit(lookupToken);
         if (price === null) {

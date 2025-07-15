@@ -3,7 +3,16 @@ import { getBetAdvice } from '@/algorithms/betAdvice';
 
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY!;
 const ALCHEMY_PRICE_HISTORY_ENDPOINT = `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/historical`;
-const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY!;
+const COINGECKO_IDS: Record<string, string> = {
+  SOL: 'solana',
+  BONK: 'bonk',
+  BTC: 'bitcoin',
+  DOGE: 'dogecoin',
+  HYPE: 'hyperliquid',
+  PENGU: 'pudgy-penguins',
+  PUMP: 'pump-fun',
+};
+
 const TOKEN_CONTRACTS: Record<string, string | null> = {
   ETH: null, // native
   WBTC: '0x2260FAC5E5542a773AaA73edC008A79646d1F9912',
@@ -15,16 +24,6 @@ const TOKEN_CONTRACTS: Record<string, string | null> = {
   TON: '0x2e9d63788249371f1dfc918a52f8d799f4a38c94', // ERC-20 version
   // SOL: Not ERC-20, handle separately if needed
   // BONK: Not ERC-20, handle separately if needed
-};
-
-const COINGECKO_IDS: Record<string, string> = {
-  SOL: 'solana',
-  BONK: 'bonk',
-  BTC: 'bitcoin',
-  DOGE: 'dogecoin',
-  HYPE: 'hyperliquid',
-  PENGU: 'pudgy-penguins',
-  PUMP: 'pump-fun',
 };
 
 function calculateMovingAverage(prices: number[], window: number): number | null {
@@ -56,7 +55,7 @@ async function fetchAlchemyHistory(token: string, contract: string | null, days:
   });
   const data = await res.json();
   if (data?.data?.prices) {
-    return data.data.prices.map((p: any) => parseFloat(p.value)).filter((v: any) => !isNaN(v));
+    return data.data.prices.map((p: { value: string }) => parseFloat(p.value)).filter((v: number) => !isNaN(v));
   }
   return [];
 }
@@ -159,7 +158,7 @@ export async function POST(req: NextRequest) {
     let botProbability = 0.6; // fallback
     let ma7 = null;
     const lookupToken = priceToken || token;
-    let contract = TOKEN_CONTRACTS[lookupToken];
+    const contract = TOKEN_CONTRACTS[lookupToken];
     // Fetch current price using Nodit, fallback to CoinGecko
     price = await fetchCurrentPriceNodit(lookupToken);
     if (price === null) {
