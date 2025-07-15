@@ -10,9 +10,9 @@ export interface BetAdviceInput {
 
 export interface BetAdviceResult {
   oddsAdvice: string;
-  stakeAdvice: string;
   trendAdvice: string;
   sentimentAdvice: string;
+  priceHistory?: number[];
 }
 
 export function getBetAdvice(input: BetAdviceInput): BetAdviceResult {
@@ -39,16 +39,21 @@ export function getBetAdvice(input: BetAdviceInput): BetAdviceResult {
     stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
   }
 
-  // (C) Market Trends (mocked)
+  // (C) Market Trends (improved)
   let trendAdvice = '';
   if (input.priceHistory && input.priceHistory.length > 1) {
     const oldPrice = input.priceHistory[0];
     const newPrice = input.priceHistory[input.priceHistory.length - 1];
     const change = ((newPrice - oldPrice) / oldPrice) * 100;
+    trendAdvice = `Price changed ${change.toFixed(2)}% over the period.`;
     if (Math.abs(change) > 20) {
-      trendAdvice = `Warning: Odds have shifted ${change.toFixed(1)}% in the last period. Could be risky 🚨.`;
+      trendAdvice += " Could be risky 🚨.";
+    } else if (change > 0) {
+      trendAdvice += " Uptrend 📈.";
+    } else if (change < 0) {
+      trendAdvice += " Downtrend 📉.";
     } else {
-      trendAdvice = `Market is stable. Change: ${change.toFixed(1)}%.`;
+      trendAdvice += " Flat trend.";
     }
   } else {
     trendAdvice = "No price history available for trend analysis.";
@@ -61,8 +66,8 @@ export function getBetAdvice(input: BetAdviceInput): BetAdviceResult {
 
   return {
     oddsAdvice,
-    stakeAdvice,
     trendAdvice,
     sentimentAdvice,
+    priceHistory: input.priceHistory,
   };
 } 

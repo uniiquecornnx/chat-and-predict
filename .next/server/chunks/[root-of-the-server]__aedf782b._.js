@@ -84,16 +84,21 @@ function getBetAdvice(input) {
     } else {
         stakeAdvice = "No bankroll info provided. Can't compute optimal stake.";
     }
-    // (C) Market Trends (mocked)
+    // (C) Market Trends (improved)
     let trendAdvice = '';
     if (input.priceHistory && input.priceHistory.length > 1) {
         const oldPrice = input.priceHistory[0];
         const newPrice = input.priceHistory[input.priceHistory.length - 1];
         const change = (newPrice - oldPrice) / oldPrice * 100;
+        trendAdvice = `Price changed ${change.toFixed(2)}% over the period.`;
         if (Math.abs(change) > 20) {
-            trendAdvice = `Warning: Odds have shifted ${change.toFixed(1)}% in the last period. Could be risky 🚨.`;
+            trendAdvice += " Could be risky 🚨.";
+        } else if (change > 0) {
+            trendAdvice += " Uptrend 📈.";
+        } else if (change < 0) {
+            trendAdvice += " Downtrend 📉.";
         } else {
-            trendAdvice = `Market is stable. Change: ${change.toFixed(1)}%.`;
+            trendAdvice += " Flat trend.";
         }
     } else {
         trendAdvice = "No price history available for trend analysis.";
@@ -102,9 +107,9 @@ function getBetAdvice(input) {
     const sentimentAdvice = Math.random() > 0.5 ? "Sentiment is highly bullish on this outcome – 80% of recent posts agree." : "Sentiment is mixed. Proceed cautiously.";
     return {
         oddsAdvice,
-        stakeAdvice,
         trendAdvice,
-        sentimentAdvice
+        sentimentAdvice,
+        priceHistory: input.priceHistory
     };
 }
 }}),
@@ -120,19 +125,18 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$serv
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvice$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/algorithms/betAdvice.ts [app-route] (ecmascript)");
 ;
 ;
-const ALCHEMY_API_KEY = 's-hL3Vfz4wA9SExlo7HX0O4cESo63hKL';
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ALCHEMY_PRICE_HISTORY_ENDPOINT = `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/historical`;
+const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
 const TOKEN_CONTRACTS = {
     ETH: null,
     WBTC: '0x2260FAC5E5542a773AaA73edC008A79646d1F9912',
-    WDOGE: '0x3832d2F059E55934220881F831bE501D180671A7',
-    WSOL: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
+    WDOGE: '0xbA2aE424d960c26247Dd6c32edC70B295c744C43',
     USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    SHIBA: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
-    TON: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
-    PEPE: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912',
-    BONK: '0xd93f7E271cB87c23AaA73edC008A79646d1F9912'
+    SHIBA: '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE',
+    PEPE: '0x6982508145454Ce325dDbE47a25d4ec3d2311933',
+    TON: '0x2e9d63788249371f1dfc918a52f8d799f4a38c94'
 };
 function calculateMovingAverage(prices, window) {
     if (prices.length < window) return null;
@@ -146,6 +150,115 @@ function getPastISOString(days) {
     const d = new Date();
     d.setDate(d.getDate() - days);
     return d.toISOString().split('T')[0] + 'T00:00:00Z';
+}
+async function fetchAlchemyHistory(token, contract, days) {
+    if (!contract && token !== 'ETH') return [];
+    const startTime = getPastISOString(days);
+    const endTime = getTodayISOString();
+    const body = contract ? {
+        network: 'ethereum',
+        address: contract,
+        startTime,
+        endTime
+    } : {
+        symbol: token,
+        startTime,
+        endTime
+    };
+    const res = await fetch(ALCHEMY_PRICE_HISTORY_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data?.data?.prices) {
+        return data.data.prices.map((p)=>parseFloat(p.value)).filter((v)=>!isNaN(v));
+    }
+    return [];
+}
+async function fetchCoinGeckoHistory(contract, days) {
+    const url = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${contract}/market_chart?vs_currency=usd&days=${days}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data?.prices) {
+            return data.prices.map((p)=>p[1]).filter((v)=>!isNaN(v));
+        } else {
+            console.log(`[CoinGecko] No price history found for contract: ${contract}`);
+        }
+    } catch (err) {
+        console.error(`[CoinGecko] Error fetching price history for contract: ${contract}`, err);
+    }
+    return [];
+}
+async function fetchSolHistory(days) {
+    const url = `https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=${days}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data?.prices) {
+            return data.prices.map((p)=>p[1]).filter((v)=>!isNaN(v));
+        } else {
+            console.log(`[CoinGecko] No price history found for SOL`);
+        }
+    } catch (err) {
+        console.error(`[CoinGecko] Error fetching price history for SOL`, err);
+    }
+    return [];
+}
+const NODIT_API_URL = process.env.NODIT_API_URL || "http://localhost:3000/api/nodit";
+async function fetchCurrentPriceNodit(token) {
+    try {
+        const res = await fetch(NODIT_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "get_price",
+                params: [
+                    token
+                ],
+                id: 1
+            })
+        });
+        const data = await res.json();
+        if (data?.result?.price) {
+            return data.result.price;
+        }
+    } catch (err) {
+        console.error(`[Nodit] Error fetching current price for ${token}`, err);
+    }
+    return null;
+}
+// Fetch current price using CoinGecko
+async function fetchCurrentPriceCoinGecko(token, contract) {
+    try {
+        let url = "";
+        if (token === "ETH") {
+            url = `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`;
+        } else if (token === "SOL") {
+            url = `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`;
+        } else if (contract) {
+            url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contract}&vs_currencies=usd`;
+        } else {
+            return null;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        if (token === "ETH" && data?.ethereum?.usd) return data.ethereum.usd;
+        if (token === "SOL" && data?.solana?.usd) return data.solana.usd;
+        if (contract) {
+            const key = Object.keys(data)[0];
+            if (key && data[key]?.usd) return data[key].usd;
+        }
+    } catch (err) {
+        console.error(`[CoinGecko] Error fetching current price for ${token}`, err);
+    }
+    return null;
 }
 async function POST(req) {
     try {
@@ -163,8 +276,13 @@ async function POST(req) {
         let ma7 = null, ma15 = null, ma30 = null;
         const lookupToken = priceToken || token;
         let symbol = token;
+        // Fetch current price using Nodit, fallback to CoinGecko
+        price = await fetchCurrentPriceNodit(lookupToken);
+        let contract = TOKEN_CONTRACTS[lookupToken];
+        if (price === null) {
+            price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
+        }
         if (lookupToken === 'ETH') {
-            price = 3500;
             priceHistory = [
                 3400,
                 3450,
@@ -172,6 +290,12 @@ async function POST(req) {
             ];
             botProbability = 0.6;
             ma7 = ma15 = ma30 = 3500;
+        } else if (lookupToken === 'SOL') {
+            // Fetch SOL price history using CoinGecko's symbol endpoint
+            const history7 = await fetchSolHistory(7);
+            priceHistory = history7;
+            ma7 = calculateMovingAverage(history7, 7);
+            botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
         } else {
             const contract = TOKEN_CONTRACTS[lookupToken];
             if (!contract) {
@@ -181,44 +305,15 @@ async function POST(req) {
                     status: 400
                 });
             }
-            // Use symbol for Alchemy (if not ETH)
-            // For demo, fallback to symbol if contract not mapped
-            // Fetch 30 days of price history from Alchemy
-            const fetchHistory = async (days)=>{
-                const startTime = getPastISOString(days);
-                const endTime = getTodayISOString();
-                const body = contract ? {
-                    contractAddress: contract,
-                    startTime,
-                    endTime
-                } : {
-                    symbol,
-                    startTime,
-                    endTime
-                };
-                const res = await fetch(ALCHEMY_PRICE_HISTORY_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
-                const data = await res.json();
-                return data?.data?.prices?.map((p)=>parseFloat(p.value)).filter((v)=>!isNaN(v)) || [];
-            };
-            // Fetch histories
-            const [history7, history15, history30] = await Promise.all([
-                fetchHistory(7),
-                fetchHistory(15),
-                fetchHistory(30)
-            ]);
-            // Use the latest price from the most recent history
-            price = history7.length ? history7[history7.length - 1] : null;
+            // Try Alchemy first
+            let history7 = await fetchAlchemyHistory(token, contract, 7);
+            if (!history7.length) {
+                // Fallback to CoinGecko
+                history7 = await fetchCoinGeckoHistory(contract, 7);
+            }
             priceHistory = history7;
             ma7 = calculateMovingAverage(history7, 7);
-            ma15 = calculateMovingAverage(history15, 15);
-            ma30 = calculateMovingAverage(history30, 30);
-            // Use 7-day MA as botProbability for demo
+            // For demo, use 7-day MA as botProbability
             botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
         }
         const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvice$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getBetAdvice"])({
@@ -232,9 +327,7 @@ async function POST(req) {
             ...result,
             price,
             token,
-            ma7,
-            ma15,
-            ma30
+            ma7
         });
     } catch (error) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({

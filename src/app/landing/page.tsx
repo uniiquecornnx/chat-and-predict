@@ -1,22 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bot';
-  timestamp: Date;
+  timestamp: Date | null;
 }
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hey! I'm your prediction market advisor. Tell me about a bet you're thinking of making, like 'I want to short SOL at $150' and I'll analyze it for you! 🚀",
+      text: "Hey! I'm your prediction market advisor. Tell me about a bet you're thinking of making, like 'I want to short SHIBA' and I'll analyze it for you!",
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: null
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -41,7 +41,7 @@ export default function ChatInterface() {
   function getPriceToken(token: string) {
     const mapping: Record<string, string> = {
       BTC: 'WBTC',
-      DOGE: 'WDOGE',
+      DOGE: 'WDOGE', 
       SOL: 'WSOL',
       // Add more as needed
     };
@@ -124,9 +124,9 @@ export default function ChatInterface() {
 ` +
             (advice.price ? `Current price: $${advice.price}\n` : '') +
             `Here's my analysis of your bet:\n\n` +
-            `🤑 Odds: ${advice.oddsAdvice}\n` +
-            `📈 Trend: ${advice.trendAdvice}\n` +
-            `💬 Sentiment: ${advice.sentimentAdvice}`,
+            ` Odds: ${advice.oddsAdvice}\n` +
+            ` Trend: ${advice.trendAdvice}\n` +
+            ` Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
         };
@@ -159,6 +159,12 @@ export default function ChatInterface() {
       handleSendMessage();
     }
   };
+
+  useEffect(() => {
+    setMessages(prev => prev.map(msg =>
+      msg.timestamp === null ? { ...msg, timestamp: new Date() } : msg
+    ));
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-emerald-900 flex flex-col">
@@ -197,7 +203,7 @@ export default function ChatInterface() {
                   <div className="flex-1">
                     <p className="text-sm leading-relaxed">{message.text}</p>
                     <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {message.timestamp ? message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </p>
                   </div>
                   {message.sender === 'user' && (

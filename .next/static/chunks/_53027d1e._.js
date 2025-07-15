@@ -23,9 +23,9 @@ function ChatInterface() {
     const [messages, setMessages] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([
         {
             id: '1',
-            text: "Hey! I'm your prediction market advisor. Tell me about a bet you're thinking of making, like 'I want to short SOL at $150' and I'll analyze it for you! 🚀",
+            text: "Hey! I'm your prediction market advisor. Tell me about a bet you're thinking of making, like 'I want to short SHIBA' and I'll analyze it for you!",
             sender: 'bot',
-            timestamp: new Date()
+            timestamp: null
         }
     ]);
     const [inputValue, setInputValue] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
@@ -164,7 +164,7 @@ function ChatInterface() {
                 botMessage = {
                     id: (Date.now() + 2).toString(),
                     text: `You want to ${action} ${token}.
-` + (advice.price ? `Current price: $${advice.price}\n` : '') + `Here's my analysis of your bet:\n\n` + `🤑 Odds: ${advice.oddsAdvice}\n` + `📈 Trend: ${advice.trendAdvice}\n` + `💬 Sentiment: ${advice.sentimentAdvice}`,
+` + (advice.price ? `Current price: $${advice.price}\n` : '') + `Here's my analysis of your bet:\n\n` + ` Odds: ${advice.oddsAdvice}\n` + ` Trend: ${advice.trendAdvice}\n` + ` Sentiment: ${advice.sentimentAdvice}`,
                     sender: 'bot',
                     timestamp: new Date()
                 };
@@ -199,6 +199,18 @@ function ChatInterface() {
             handleSendMessage();
         }
     };
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "ChatInterface.useEffect": ()=>{
+            setMessages({
+                "ChatInterface.useEffect": (prev)=>prev.map({
+                        "ChatInterface.useEffect": (msg)=>msg.timestamp === null ? {
+                                ...msg,
+                                timestamp: new Date()
+                            } : msg
+                    }["ChatInterface.useEffect"])
+            }["ChatInterface.useEffect"]);
+        }
+    }["ChatInterface.useEffect"], []);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-emerald-900 flex flex-col",
         children: [
@@ -213,12 +225,12 @@ function ChatInterface() {
                                 className: "w-6 h-6 text-white"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/landing/page.tsx",
-                                lineNumber: 169,
+                                lineNumber: 175,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 168,
+                            lineNumber: 174,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -228,7 +240,7 @@ function ChatInterface() {
                                     children: "I am your Prediction companion🦾"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 172,
+                                    lineNumber: 178,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -236,24 +248,24 @@ function ChatInterface() {
                                     children: "Are you ready to take a bet?"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 173,
+                                    lineNumber: 179,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 171,
+                            lineNumber: 177,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/landing/page.tsx",
-                    lineNumber: 167,
+                    lineNumber: 173,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/landing/page.tsx",
-                lineNumber: 166,
+                lineNumber: 172,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -273,7 +285,7 @@ function ChatInterface() {
                                                     className: "w-5 h-5 text-emerald-200 mt-0.5 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 195,
+                                                    lineNumber: 201,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -284,47 +296,47 @@ function ChatInterface() {
                                                             children: message.text
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/landing/page.tsx",
-                                                            lineNumber: 198,
+                                                            lineNumber: 204,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                             className: "text-xs opacity-70 mt-1",
-                                                            children: message.timestamp.toLocaleTimeString([], {
+                                                            children: message.timestamp ? message.timestamp.toLocaleTimeString([], {
                                                                 hour: '2-digit',
                                                                 minute: '2-digit'
-                                                            })
+                                                            }) : ''
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/landing/page.tsx",
-                                                            lineNumber: 199,
+                                                            lineNumber: 205,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 197,
+                                                    lineNumber: 203,
                                                     columnNumber: 19
                                                 }, this),
                                                 message.sender === 'user' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
                                                     className: "w-5 h-5 text-purple-200 mt-0.5 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 204,
+                                                    lineNumber: 210,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/landing/page.tsx",
-                                            lineNumber: 193,
+                                            lineNumber: 199,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 186,
+                                        lineNumber: 192,
                                         columnNumber: 15
                                     }, this)
                                 }, message.id, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 182,
+                                    lineNumber: 188,
                                     columnNumber: 13
                                 }, this)),
                             isLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -338,7 +350,7 @@ function ChatInterface() {
                                                 className: "w-5 h-5 text-emerald-200"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/landing/page.tsx",
-                                                lineNumber: 215,
+                                                lineNumber: 221,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -348,7 +360,7 @@ function ChatInterface() {
                                                         className: "w-2 h-2 bg-emerald-200 rounded-full animate-bounce"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 217,
+                                                        lineNumber: 223,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -358,7 +370,7 @@ function ChatInterface() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 218,
+                                                        lineNumber: 224,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -368,35 +380,35 @@ function ChatInterface() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 219,
+                                                        lineNumber: 225,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/landing/page.tsx",
-                                                lineNumber: 216,
+                                                lineNumber: 222,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 214,
+                                        lineNumber: 220,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 213,
+                                    lineNumber: 219,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/landing/page.tsx",
-                                lineNumber: 212,
+                                lineNumber: 218,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/landing/page.tsx",
-                        lineNumber: 180,
+                        lineNumber: 186,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -416,12 +428,12 @@ function ChatInterface() {
                                         disabled: isLoading
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 231,
+                                        lineNumber: 237,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 230,
+                                    lineNumber: 236,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -432,39 +444,39 @@ function ChatInterface() {
                                         className: "w-5 h-5"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 246,
+                                        lineNumber: 252,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 241,
+                                    lineNumber: 247,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 229,
+                            lineNumber: 235,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/landing/page.tsx",
-                        lineNumber: 228,
+                        lineNumber: 234,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/landing/page.tsx",
-                lineNumber: 179,
+                lineNumber: 185,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/landing/page.tsx",
-        lineNumber: 164,
+        lineNumber: 170,
         columnNumber: 5
     }, this);
 }
-_s(ChatInterface, "IXOBFSUZ9XWg2o9ihJreGI4JtC0=");
+_s(ChatInterface, "pxcb0GnML+62Aw/KIUth72qTuys=");
 _c = ChatInterface;
 var _c;
 __turbopack_context__.k.register(_c, "ChatInterface");

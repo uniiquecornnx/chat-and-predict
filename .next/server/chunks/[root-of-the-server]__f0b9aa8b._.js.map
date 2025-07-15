@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 60, "column": 0}, "map": {"version":3,"sources":["file:///Users/devisha/Projects/chat-and-predict/src/app/api/nodit/route.ts"],"sourcesContent":["import { NextRequest, NextResponse } from 'next/server';\n\nconst NODIT_AVALANCHE_ENDPOINT = 'https://avalanche-fuji.nodit.io/majBfBsBugLFJq5rOepzhpKS6LUI3pdw';\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n\n    const noditRes = await fetch(NODIT_AVALANCHE_ENDPOINT, {\n      method: 'POST',\n      headers: {\n        'accept': 'application/json',\n        'content-type': 'application/json',\n      },\n      body: JSON.stringify(body),\n    });\n\n    const data = await noditRes.json();\n    return NextResponse.json(data);\n  } catch (error) {\n    return NextResponse.json({ error: (error as Error).message }, { status: 500 });\n  }\n} "],"names":[],"mappings":";;;AAAA;;AAEA,MAAM,2BAA2B;AAE1B,eAAe,KAAK,GAAgB;IACzC,IAAI;QACF,MAAM,OAAO,MAAM,IAAI,IAAI;QAE3B,MAAM,WAAW,MAAM,MAAM,0BAA0B;YACrD,QAAQ;YACR,SAAS;gBACP,UAAU;gBACV,gBAAgB;YAClB;YACA,MAAM,KAAK,SAAS,CAAC;QACvB;QAEA,MAAM,OAAO,MAAM,SAAS,IAAI;QAChC,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CAAC;IAC3B,EAAE,OAAO,OAAO;QACd,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CAAC;YAAE,OAAO,AAAC,MAAgB,OAAO;QAAC,GAAG;YAAE,QAAQ;QAAI;IAC9E;AACF","debugId":null}}]
+}
