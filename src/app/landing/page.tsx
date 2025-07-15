@@ -140,7 +140,7 @@ export default function ChatInterface() {
         };
       }
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch {
       setMessages(prev => [
         ...prev,
         {

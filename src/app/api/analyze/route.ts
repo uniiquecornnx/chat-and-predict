@@ -67,28 +67,12 @@ async function fetchCoinGeckoHistory(contract: string, days: number) {
     const res = await fetch(url);
     const data = await res.json();
     if (data?.prices) {
-      return data.prices.map((p: any) => p[1]).filter((v: any) => !isNaN(v));
+      return data.prices.map((p: [number, number]) => p[1]).filter((v: number) => !isNaN(v));
     } else {
       console.log(`[CoinGecko] No price history found for contract: ${contract}`);
     }
   } catch (err) {
     console.error(`[CoinGecko] Error fetching price history for contract: ${contract}`, err);
-  }
-  return [];
-}
-
-async function fetchSolHistory(days: number) {
-  const url = `https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=${days}`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data?.prices) {
-      return data.prices.map((p: any) => p[1]).filter((v: any) => !isNaN(v));
-    } else {
-      console.log(`[CoinGecko] No price history found for SOL`);
-    }
-  } catch (err) {
-    console.error(`[CoinGecko] Error fetching price history for SOL`, err);
   }
   return [];
 }
@@ -99,7 +83,7 @@ async function fetchCoinGeckoIdHistory(id: string, days: number) {
     const res = await fetch(url);
     const data = await res.json();
     if (data?.prices) {
-      return data.prices.map((p: any) => p[1]).filter((v: any) => !isNaN(v));
+      return data.prices.map((p: [number, number]) => p[1]).filter((v: number) => !isNaN(v));
     } else {
       console.log(`[CoinGecko] No price history found for id: ${id}`);
     }
@@ -173,12 +157,11 @@ export async function POST(req: NextRequest) {
     let price = null;
     let priceHistory: number[] = [];
     let botProbability = 0.6; // fallback
-    let ma7 = null, ma15 = null, ma30 = null;
+    let ma7 = null;
     const lookupToken = priceToken || token;
-    let symbol = token;
+    let contract = TOKEN_CONTRACTS[lookupToken];
     // Fetch current price using Nodit, fallback to CoinGecko
     price = await fetchCurrentPriceNodit(lookupToken);
-    let contract = TOKEN_CONTRACTS[lookupToken];
     if (price === null) {
       price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
     }
@@ -191,7 +174,7 @@ export async function POST(req: NextRequest) {
     } else if (lookupToken === 'ETH') {
       priceHistory = [3400, 3450, 3500];
       botProbability = 0.6;
-      ma7 = ma15 = ma30 = 3500;
+      ma7 = 3500;
     } else {
       const contract = TOKEN_CONTRACTS[lookupToken];
       if (!contract) {

@@ -21,7 +21,7 @@ export default function Home() {
           className="rounded-full shadow-lg border-4 border-purple-700 bg-white/10"
         />
         <h1 className="mt-6 text-4xl font-extrabold text-white drop-shadow-lg font-mono text-center">
-          Hi fam, I am Predicto! <span className="block text-2xl font-light text-emerald-200 mt-2">Humans guess. I calculate. Dont' fight the Math, ape in and win.</span>
+          Hi fam, I am Predicto! <span className="block text-2xl font-light text-emerald-200 mt-2">Humans guess. I calculate. Don&apos;t fight the Math, ape in and win.</span>
         </h1>
       </div>
       <button

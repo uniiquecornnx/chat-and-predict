@@ -94,9 +94,9 @@ function getBetAdvice(input) {
         if (Math.abs(change) > 20) {
             trendAdvice += " Could be risky 🚨.";
         } else if (change > 0) {
-            trendAdvice += " Uptrend 📈";
+            trendAdvice += " Uptrend 📈.";
         } else if (change < 0) {
-            trendAdvice += " Downtrend 📉";
+            trendAdvice += " Downtrend 📉.";
         } else {
             trendAdvice += " Flat trend.";
         }
@@ -202,21 +202,6 @@ async function fetchCoinGeckoHistory(contract, days) {
     }
     return [];
 }
-async function fetchSolHistory(days) {
-    const url = `https://api.coingecko.com/api/v3/coins/solana/market_chart?vs_currency=usd&days=${days}`;
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data?.prices) {
-            return data.prices.map((p)=>p[1]).filter((v)=>!isNaN(v));
-        } else {
-            console.log(`[CoinGecko] No price history found for SOL`);
-        }
-    } catch (err) {
-        console.error(`[CoinGecko] Error fetching price history for SOL`, err);
-    }
-    return [];
-}
 async function fetchCoinGeckoIdHistory(id, days) {
     const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
     try {
@@ -297,12 +282,11 @@ async function POST(req) {
         let price = null;
         let priceHistory = [];
         let botProbability = 0.6; // fallback
-        let ma7 = null, ma15 = null, ma30 = null;
+        let ma7 = null;
         const lookupToken = priceToken || token;
-        let symbol = token;
+        let contract = TOKEN_CONTRACTS[lookupToken];
         // Fetch current price using Nodit, fallback to CoinGecko
         price = await fetchCurrentPriceNodit(lookupToken);
-        let contract = TOKEN_CONTRACTS[lookupToken];
         if (price === null) {
             price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
         }
@@ -319,7 +303,7 @@ async function POST(req) {
                 3500
             ];
             botProbability = 0.6;
-            ma7 = ma15 = ma30 = 3500;
+            ma7 = 3500;
         } else {
             const contract = TOKEN_CONTRACTS[lookupToken];
             if (!contract) {

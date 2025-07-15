@@ -180,7 +180,7 @@ function ChatInterface() {
                     ...prev,
                     botMessage
                 ]);
-        } catch (error) {
+        } catch  {
             setMessages((prev)=>[
                     ...prev,
                     {
