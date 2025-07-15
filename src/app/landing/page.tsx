@@ -40,9 +40,10 @@ export default function ChatInterface() {
   // Helper to map user token to price token for wrapped assets
   function getPriceToken(token: string) {
     const mapping: Record<string, string> = {
-      BTC: 'WBTC',
-      DOGE: 'WDOGE', 
-      SOL: 'WSOL',
+      // BTC should map to itself for CoinGecko ID-based fetching
+      // Remove mapping to WBTC
+      // Remove DOGE mapping to WDOGE
+      // Remove SOL mapping to WSOL
       // Add more as needed
     };
     return mapping[token] || token;
@@ -68,7 +69,7 @@ export default function ChatInterface() {
   // Helper to parse action and token from user message
   function parseActionAndToken(msg: string) {
     const actions = ['long', 'short', 'buy', 'sell', 'longing', 'shorting'];
-    const tokens = ['SOL', 'ETH', 'BTC', 'AVAX', 'USDT', 'USDC', 'BNB', 'DOGE', 'MATIC', 'ADA', 'BONK' , 'PEPE' , 'TON' , 'SHIBA'];
+    const tokens = ['SOL', 'ETH', 'BTC', 'AVAX', 'USDT', 'USDC', 'BNB', 'DOGE', 'MATIC', 'ADA', 'BONK' , 'PEPE' , 'TON' , 'SHIBA', 'PENGU', 'PUMP', 'HYPE'];
     const words = msg.toUpperCase().split(/\s+/);
     let foundAction = null;
     let foundToken = null;

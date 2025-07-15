@@ -67,9 +67,9 @@ function getBetAdvice(input) {
     const edge = input.botProbability - input.marketProbability;
     let oddsAdvice = '';
     if (edge > 0) {
-        oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it 🤑.";
+        oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it.";
     } else {
-        oddsAdvice = "Careful! The market is overpricing this. Risk is higher than reward ⚠️.";
+        oddsAdvice = "Careful! The market is overpricing this. Risk is higher than reward.";
     }
     // (B) Stake Size Advice (Kelly Criterion)
     let stakeAdvice = '';
@@ -94,9 +94,9 @@ function getBetAdvice(input) {
         if (Math.abs(change) > 20) {
             trendAdvice += " Could be risky 🚨.";
         } else if (change > 0) {
-            trendAdvice += " Uptrend 📈.";
+            trendAdvice += " Uptrend 📈";
         } else if (change < 0) {
-            trendAdvice += " Downtrend 📉.";
+            trendAdvice += " Downtrend 📉";
         } else {
             trendAdvice += " Flat trend.";
         }
@@ -137,6 +137,15 @@ const TOKEN_CONTRACTS = {
     SHIBA: '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE',
     PEPE: '0x6982508145454Ce325dDbE47a25d4ec3d2311933',
     TON: '0x2e9d63788249371f1dfc918a52f8d799f4a38c94'
+};
+const COINGECKO_IDS = {
+    SOL: 'solana',
+    BONK: 'bonk',
+    BTC: 'bitcoin',
+    DOGE: 'dogecoin',
+    HYPE: 'hyperliquid',
+    PENGU: 'pudgy-penguins',
+    PUMP: 'pump-fun'
 };
 function calculateMovingAverage(prices, window) {
     if (prices.length < window) return null;
@@ -208,6 +217,21 @@ async function fetchSolHistory(days) {
     }
     return [];
 }
+async function fetchCoinGeckoIdHistory(id, days) {
+    const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data?.prices) {
+            return data.prices.map((p)=>p[1]).filter((v)=>!isNaN(v));
+        } else {
+            console.log(`[CoinGecko] No price history found for id: ${id}`);
+        }
+    } catch (err) {
+        console.error(`[CoinGecko] Error fetching price history for id: ${id}`, err);
+    }
+    return [];
+}
 const NODIT_API_URL = process.env.NODIT_API_URL || "http://localhost:3000/api/nodit";
 async function fetchCurrentPriceNodit(token) {
     try {
@@ -240,8 +264,8 @@ async function fetchCurrentPriceCoinGecko(token, contract) {
         let url = "";
         if (token === "ETH") {
             url = `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`;
-        } else if (token === "SOL") {
-            url = `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`;
+        } else if (COINGECKO_IDS[token]) {
+            url = `https://api.coingecko.com/api/v3/simple/price?ids=${COINGECKO_IDS[token]}&vs_currencies=usd`;
         } else if (contract) {
             url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contract}&vs_currencies=usd`;
         } else {
@@ -250,7 +274,7 @@ async function fetchCurrentPriceCoinGecko(token, contract) {
         const res = await fetch(url);
         const data = await res.json();
         if (token === "ETH" && data?.ethereum?.usd) return data.ethereum.usd;
-        if (token === "SOL" && data?.solana?.usd) return data.solana.usd;
+        if (COINGECKO_IDS[token] && data[COINGECKO_IDS[token]]?.usd) return data[COINGECKO_IDS[token]].usd;
         if (contract) {
             const key = Object.keys(data)[0];
             if (key && data[key]?.usd) return data[key].usd;
@@ -282,7 +306,13 @@ async function POST(req) {
         if (price === null) {
             price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
         }
-        if (lookupToken === 'ETH') {
+        if (COINGECKO_IDS[lookupToken]) {
+            // Non-ERC20 tokens: use CoinGecko ID endpoints
+            const history7 = await fetchCoinGeckoIdHistory(COINGECKO_IDS[lookupToken], 7);
+            priceHistory = history7;
+            ma7 = calculateMovingAverage(history7, 7);
+            botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
+        } else if (lookupToken === 'ETH') {
             priceHistory = [
                 3400,
                 3450,
@@ -290,12 +320,6 @@ async function POST(req) {
             ];
             botProbability = 0.6;
             ma7 = ma15 = ma30 = 3500;
-        } else if (lookupToken === 'SOL') {
-            // Fetch SOL price history using CoinGecko's symbol endpoint
-            const history7 = await fetchSolHistory(7);
-            priceHistory = history7;
-            ma7 = calculateMovingAverage(history7, 7);
-            botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
         } else {
             const contract = TOKEN_CONTRACTS[lookupToken];
             if (!contract) {
@@ -313,7 +337,6 @@ async function POST(req) {
             }
             priceHistory = history7;
             ma7 = calculateMovingAverage(history7, 7);
-            // For demo, use 7-day MA as botProbability
             botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
         }
         const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$algorithms$2f$betAdvice$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getBetAdvice"])({

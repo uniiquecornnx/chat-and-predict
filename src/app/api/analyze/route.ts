@@ -17,6 +17,16 @@ const TOKEN_CONTRACTS: Record<string, string | null> = {
   // BONK: Not ERC-20, handle separately if needed
 };
 
+const COINGECKO_IDS: Record<string, string> = {
+  SOL: 'solana',
+  BONK: 'bonk',
+  BTC: 'bitcoin',
+  DOGE: 'dogecoin',
+  HYPE: 'hyperliquid',
+  PENGU: 'pudgy-penguins',
+  PUMP: 'pump-fun',
+};
+
 function calculateMovingAverage(prices: number[], window: number): number | null {
   if (prices.length < window) return null;
   const sum = prices.slice(-window).reduce((a, b) => a + b, 0);
@@ -83,6 +93,22 @@ async function fetchSolHistory(days: number) {
   return [];
 }
 
+async function fetchCoinGeckoIdHistory(id: string, days: number) {
+  const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data?.prices) {
+      return data.prices.map((p: any) => p[1]).filter((v: any) => !isNaN(v));
+    } else {
+      console.log(`[CoinGecko] No price history found for id: ${id}`);
+    }
+  } catch (err) {
+    console.error(`[CoinGecko] Error fetching price history for id: ${id}`, err);
+  }
+  return [];
+}
+
 const NODIT_API_URL = process.env.NODIT_API_URL || "http://localhost:3000/api/nodit";
 
 async function fetchCurrentPriceNodit(token: string) {
@@ -113,8 +139,8 @@ async function fetchCurrentPriceCoinGecko(token: string, contract?: string) {
     let url = "";
     if (token === "ETH") {
       url = `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`;
-    } else if (token === "SOL") {
-      url = `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`;
+    } else if (COINGECKO_IDS[token]) {
+      url = `https://api.coingecko.com/api/v3/simple/price?ids=${COINGECKO_IDS[token]}&vs_currencies=usd`;
     } else if (contract) {
       url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contract}&vs_currencies=usd`;
     } else {
@@ -123,7 +149,7 @@ async function fetchCurrentPriceCoinGecko(token: string, contract?: string) {
     const res = await fetch(url);
     const data = await res.json();
     if (token === "ETH" && data?.ethereum?.usd) return data.ethereum.usd;
-    if (token === "SOL" && data?.solana?.usd) return data.solana.usd;
+    if (COINGECKO_IDS[token] && data[COINGECKO_IDS[token]]?.usd) return data[COINGECKO_IDS[token]].usd;
     if (contract) {
       const key = Object.keys(data)[0];
       if (key && data[key]?.usd) return data[key].usd;
@@ -156,16 +182,16 @@ export async function POST(req: NextRequest) {
     if (price === null) {
       price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
     }
-    if (lookupToken === 'ETH') {
-      priceHistory = [3400, 3450, 3500];
-      botProbability = 0.6;
-      ma7 = ma15 = ma30 = 3500;
-    } else if (lookupToken === 'SOL') {
-      // Fetch SOL price history using CoinGecko's symbol endpoint
-      const history7 = await fetchSolHistory(7);
+    if (COINGECKO_IDS[lookupToken]) {
+      // Non-ERC20 tokens: use CoinGecko ID endpoints
+      const history7 = await fetchCoinGeckoIdHistory(COINGECKO_IDS[lookupToken], 7);
       priceHistory = history7;
       ma7 = calculateMovingAverage(history7, 7);
       botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
+    } else if (lookupToken === 'ETH') {
+      priceHistory = [3400, 3450, 3500];
+      botProbability = 0.6;
+      ma7 = ma15 = ma30 = 3500;
     } else {
       const contract = TOKEN_CONTRACTS[lookupToken];
       if (!contract) {
@@ -179,7 +205,6 @@ export async function POST(req: NextRequest) {
       }
       priceHistory = history7;
       ma7 = calculateMovingAverage(history7, 7);
-      // For demo, use 7-day MA as botProbability
       botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
     }
 
