@@ -1,8 +1,7 @@
 {
-  "/api/nodit/route": "app/api/nodit/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/api/analyze/route": "app/api/analyze/route.js",
-  "/page": "app/page.js",
-  "/landing/page": "app/landing/page.js"
+  "/api/nodit/route": "app/api/nodit/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/landing/page": "app/landing/page.js",
+  "/page": "app/page.js"
 }

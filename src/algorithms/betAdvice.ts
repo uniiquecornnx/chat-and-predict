@@ -20,7 +20,7 @@ export function getBetAdvice(input: BetAdviceInput): BetAdviceResult {
   const edge = input.botProbability - input.marketProbability;
   let oddsAdvice = '';
   if (edge > 0) {
-    oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it 🤑.";
+    oddsAdvice = "This market is undervalued. You’re getting alpha here. Go for it.";
   } else {
     oddsAdvice = "Careful! The market is overpricing this. Risk is higher than reward ⚠️.";
   }

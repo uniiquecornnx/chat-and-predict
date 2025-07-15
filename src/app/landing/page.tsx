@@ -121,11 +121,11 @@ export default function ChatInterface() {
         const advice = await fetchBetAdvice(token);
         botMessage = {
           id: (Date.now() + 2).toString(),
-          text: `You want to ${action} ${token}.
-` +
-            (advice.price ? `Current price: $${advice.price}\n` : '') +
+          text: `You want to ${action} ${token}.\n` +
+            (advice.price ? `Current price: $${advice.price.toFixed(8)}\n` : '') +
             `Here's my analysis of your bet:\n\n` +
             ` Trend (7d): ${advice.trendAdvice}\n` +
+            (advice.predictedPrice ? `Prediction: $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction: Not enough data.\n') +
             ` Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
