@@ -125,7 +125,9 @@ export default function ChatInterface() {
             (advice.price ? `Current price: $${advice.price.toFixed(8)}\n` : '') +
             `Here's my analysis of your bet:\n\n` +
             ` Trend (7d): ${advice.trendAdvice}\n` +
-            (advice.predictedPrice ? `Prediction: $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction: Not enough data.\n') +
+            (advice.predictedPrice ? `Prediction (Linear): $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction (Linear): Not enough data.\n') +
+            (advice.predictedPricePolynomial ? `Prediction (Poly): $${advice.predictedPricePolynomial.toFixed(8)}\n` : 'Prediction (Poly): Not enough data.\n') +
+            (advice.predictedPriceEMA ? `Prediction (EMA): $${advice.predictedPriceEMA.toFixed(8)}\n` : 'Prediction (EMA): Not enough data.\n') +
             ` Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
@@ -238,7 +240,7 @@ export default function ChatInterface() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Tell me about your bet... e.g., 'I want to short SOL at $150'"
+                placeholder="Tell me about your bet... e.g., 'I want to short SOL'"
                 className="w-full bg-purple-900/50 border border-purple-600/30 rounded-xl px-4 py-3 text-white placeholder-purple-300 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 rows={2}
                 disabled={isLoading}

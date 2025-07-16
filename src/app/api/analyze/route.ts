@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBetAdvice } from '@/algorithms/betAdvice';
 import { predictNextPrice } from '@/algorithms/linearRegression';
+import { predictNextPricePolynomial } from '@/algorithms/polynomialRegression';
+import { predictNextPriceEMA } from '@/algorithms/ema';
 
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY!;
 const ALCHEMY_PRICE_HISTORY_ENDPOINT = `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/historical`;
@@ -192,6 +194,8 @@ export async function POST(req: NextRequest) {
     }
 
     const predictedPrice = predictNextPrice(priceHistory);
+    const predictedPricePolynomial = predictNextPricePolynomial(priceHistory);
+    const predictedPriceEMA = predictNextPriceEMA(priceHistory);
 
     const result = getBetAdvice({
       marketProbability: marketProbability ?? 0.55,
@@ -200,7 +204,7 @@ export async function POST(req: NextRequest) {
       bankroll,
       priceHistory,
     });
-    return NextResponse.json({ ...result, price, token, ma7, predictedPrice });
+    return NextResponse.json({ ...result, price, token, ma7, predictedPrice, predictedPricePolynomial, predictedPriceEMA });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
