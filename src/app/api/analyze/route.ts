@@ -3,6 +3,7 @@ import { getBetAdvice } from '@/algorithms/betAdvice';
 import { predictNextPrice } from '@/algorithms/linearRegression';
 import { predictNextPricePolynomial } from '@/algorithms/polynomialRegression';
 import { predictNextPriceEMA } from '@/algorithms/ema';
+import { fetchPythonPrediction } from '@/algorithms/pythonPredict';
 
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY!;
 const ALCHEMY_PRICE_HISTORY_ENDPOINT = `https://api.g.alchemy.com/prices/v1/${ALCHEMY_API_KEY}/tokens/historical`;
@@ -167,11 +168,13 @@ export async function POST(req: NextRequest) {
     if (price === null) {
       price = await fetchCurrentPriceCoinGecko(lookupToken, contract === null ? undefined : contract);
     }
+    // Use 15 days for all price history fetches
+    const HISTORY_DAYS = 15;
     if (COINGECKO_IDS[lookupToken]) {
       // Non-ERC20 tokens: use CoinGecko ID endpoints
-      const history7 = await fetchCoinGeckoIdHistory(COINGECKO_IDS[lookupToken], 7);
-      priceHistory = history7;
-      ma7 = calculateMovingAverage(history7, 7);
+      const history15 = await fetchCoinGeckoIdHistory(COINGECKO_IDS[lookupToken], HISTORY_DAYS);
+      priceHistory = history15;
+      ma7 = calculateMovingAverage(history15, 7);
       botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
     } else if (lookupToken === 'ETH') {
       priceHistory = [3400, 3450, 3500];
@@ -183,19 +186,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unsupported token' }, { status: 400 });
       }
       // Try Alchemy first
-      let history7 = await fetchAlchemyHistory(token, contract, 7);
-      if (!history7.length) {
+      let history15 = await fetchAlchemyHistory(token, contract, HISTORY_DAYS);
+      if (!history15.length) {
         // Fallback to CoinGecko
-        history7 = await fetchCoinGeckoHistory(contract, 7);
+        history15 = await fetchCoinGeckoHistory(contract, HISTORY_DAYS);
       }
-      priceHistory = history7;
-      ma7 = calculateMovingAverage(history7, 7);
+      priceHistory = history15;
+      ma7 = calculateMovingAverage(history15, 7);
       botProbability = ma7 && price ? Math.min(1, Math.max(0, ma7 / price)) : 0.6;
     }
 
     const predictedPrice = predictNextPrice(priceHistory);
     const predictedPricePolynomial = predictNextPricePolynomial(priceHistory);
     const predictedPriceEMA = predictNextPriceEMA(priceHistory);
+    const predictedPriceARIMA = await fetchPythonPrediction('arima', priceHistory);
+    const predictedPriceLSTM = await fetchPythonPrediction('lstm', priceHistory);
 
     const result = getBetAdvice({
       marketProbability: marketProbability ?? 0.55,
@@ -204,7 +209,7 @@ export async function POST(req: NextRequest) {
       bankroll,
       priceHistory,
     });
-    return NextResponse.json({ ...result, price, token, ma7, predictedPrice, predictedPricePolynomial, predictedPriceEMA });
+    return NextResponse.json({ ...result, price, token, ma7, predictedPrice, predictedPricePolynomial, predictedPriceEMA, predictedPriceARIMA, predictedPriceLSTM });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

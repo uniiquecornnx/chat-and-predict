@@ -21,6 +21,7 @@ export default function ChatInterface() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
 
   // Function to call Nodit API via backend for eth_blockNumber
   async function fetchBlockNumber() {
@@ -88,6 +89,70 @@ export default function ChatInterface() {
     return { action: foundAction, token: foundToken };
   }
 
+  function getPredictionSummary({
+    trendAdvice,
+    predictedPrice,
+    predictedPricePolynomial,
+    predictedPriceEMA,
+    predictedPriceARIMA,
+    predictedPriceLSTM,
+    price
+  }: {
+    trendAdvice: string,
+    predictedPrice?: number | null,
+    predictedPricePolynomial?: number | null,
+    predictedPriceEMA?: number | null,
+    predictedPriceARIMA?: number | null,
+    predictedPriceLSTM?: number | null,
+    price?: number | null
+  }) {
+    let linearSummary = '';
+    if (predictedPrice && price) {
+      if (predictedPrice > price) {
+        linearSummary = `The token has been showing a steady upward trend. If this continues, the price could reach $${predictedPrice.toFixed(8)} soon.`;
+      } else if (predictedPrice < price) {
+        linearSummary = `Our analysis suggests the token is moving in a consistent downward trend. The price might fall towards $${predictedPrice.toFixed(8)} if this persists.`;
+      } else {
+        linearSummary = `The token price appears stable with no significant trend.`;
+      }
+    }
+    let polySummary = '';
+    if (predictedPricePolynomial && price) {
+      if (predictedPricePolynomial > price) {
+        polySummary = `The token price recently dipped but shows signs of a recovery. Our model suggests it may rise again towards $${predictedPricePolynomial.toFixed(8)}.`;
+      } else if (predictedPricePolynomial < price) {
+        polySummary = `The price has been rising but could experience a short-term peak before settling around $${predictedPricePolynomial.toFixed(8)}.`;
+      }
+    }
+    let emaSummary = '';
+    if (predictedPriceEMA && price) {
+      if (predictedPriceEMA > price) {
+        emaSummary = `Recent activity shows strong upward momentum. The token price could see a short-term increase if the trend continues.`;
+      } else if (predictedPriceEMA < price) {
+        emaSummary = `The token’s recent momentum is shifting downward, indicating potential short-term weakness.`;
+      } else {
+        emaSummary = `Short-term momentum is flat.`;
+      }
+    }
+    let arimaSummary = '';
+    if (predictedPriceARIMA && price) {
+      if (predictedPriceARIMA > price) {
+        arimaSummary = `ARIMA model suggests a possible upward move to $${predictedPriceARIMA.toFixed(8)}.`;
+      } else if (predictedPriceARIMA < price) {
+        arimaSummary = `ARIMA model suggests a possible downward move to $${predictedPriceARIMA.toFixed(8)}.`;
+      }
+    }
+    let lstmSummary = '';
+    if (predictedPriceLSTM && price) {
+      if (predictedPriceLSTM > price) {
+        lstmSummary = `LSTM model predicts a potential increase to $${predictedPriceLSTM.toFixed(8)} in the near future.`;
+      } else if (predictedPriceLSTM < price) {
+        lstmSummary = `LSTM model predicts a possible decrease to $${predictedPriceLSTM.toFixed(8)} soon.`;
+      }
+    }
+    return [linearSummary, polySummary, emaSummary, arimaSummary, lstmSummary].filter(Boolean).join(' ');
+  }
+
   // Updated handleSendMessage to use keyword matching and bet advice
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -112,7 +177,7 @@ export default function ChatInterface() {
       if (msg.includes('block number')) {
         const noditData = await fetchBlockNumber();
         botMessage = {
-          id: (Date.now() + 1).toString(),
+        id: (Date.now() + 1).toString(),
           text: `Avalanche Fuji block number: ${noditData.result}`,
           sender: 'bot',
           timestamp: new Date()
@@ -124,10 +189,23 @@ export default function ChatInterface() {
           text: `You want to ${action} ${token}.\n` +
             (advice.price ? `Current price: $${advice.price.toFixed(8)}\n` : '') +
             `Here's my analysis of your bet:\n\n` +
-            ` Trend (7d): ${advice.trendAdvice}\n` +
-            (advice.predictedPrice ? `Prediction (Linear): $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction (Linear): Not enough data.\n') +
-            (advice.predictedPricePolynomial ? `Prediction (Poly): $${advice.predictedPricePolynomial.toFixed(8)}\n` : 'Prediction (Poly): Not enough data.\n') +
-            (advice.predictedPriceEMA ? `Prediction (EMA): $${advice.predictedPriceEMA.toFixed(8)}\n` : 'Prediction (EMA): Not enough data.\n') +
+            (!advancedMode
+              ? getPredictionSummary({
+                  trendAdvice: advice.trendAdvice,
+                  predictedPrice: advice.predictedPrice,
+                  predictedPricePolynomial: advice.predictedPricePolynomial,
+                  predictedPriceEMA: advice.predictedPriceEMA,
+                  predictedPriceARIMA: advice.predictedPriceARIMA,
+                  predictedPriceLSTM: advice.predictedPriceLSTM,
+                  price: advice.price
+                }) + '\n'
+              :
+                (advice.predictedPrice ? `Prediction (Linear Regress): $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction (Linear): Not enough data.\n') +
+                (advice.predictedPricePolynomial ? `Prediction (Poly): $${advice.predictedPricePolynomial.toFixed(8)}\n` : 'Prediction (Poly): Not enough data.\n') +
+                (advice.predictedPriceEMA ? `Prediction (EMA): $${advice.predictedPriceEMA.toFixed(8)}\n` : 'Prediction (EMA): Not enough data.\n') +
+                (advice.predictedPriceARIMA ? `Prediction (ARIMA): $${advice.predictedPriceARIMA.toFixed(8)}\n` : 'Prediction (ARIMA): Not enough data.\n') +
+                (advice.predictedPriceLSTM ? `Prediction (LSTM): $${advice.predictedPriceLSTM.toFixed(8)}\n` : 'Prediction (LSTM): Not enough data.\n')
+            ) +
             ` Sentiment: ${advice.sentimentAdvice}`,
           sender: 'bot',
           timestamp: new Date()
@@ -136,9 +214,9 @@ export default function ChatInterface() {
         botMessage = {
           id: (Date.now() + 3).toString(),
           text: "I'm not sure how to help with that yet. Try asking for the block number or tell me if you want to go long or short on a token!",
-          sender: 'bot',
-          timestamp: new Date()
-        };
+        sender: 'bot',
+        timestamp: new Date()
+      };
       }
       setMessages(prev => [...prev, botMessage]);
     } catch {
@@ -152,7 +230,7 @@ export default function ChatInterface() {
         }
       ]);
     }
-    setIsLoading(false);
+      setIsLoading(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -181,6 +259,18 @@ export default function ChatInterface() {
             <p className="text-purple-200 text-sm">Are you ready to take a bet?</p>
           </div>
         </div>
+      </div>
+      {/* Advanced Mode Toggle */}
+      <div className="max-w-4xl mx-auto w-full flex justify-end items-center mt-2 mb-1 pr-4">
+        <label className="flex items-center gap-2 text-sm text-purple-200 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={advancedMode}
+            onChange={() => setAdvancedMode((v) => !v)}
+            className="accent-purple-500"
+          />
+          Advanced Mode
+        </label>
       </div>
 
       {/* Chat Container */}

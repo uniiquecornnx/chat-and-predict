@@ -36,6 +36,7 @@ function ChatInterface() {
     ]);
     const [inputValue, setInputValue] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
     const [isLoading, setIsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [advancedMode, setAdvancedMode] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     // Function to call Nodit API via backend for eth_blockNumber
     async function fetchBlockNumber() {
         const response = await fetch('/api/nodit', {
@@ -137,6 +138,59 @@ function ChatInterface() {
             token: foundToken
         };
     }
+    function getPredictionSummary({ trendAdvice, predictedPrice, predictedPricePolynomial, predictedPriceEMA, predictedPriceARIMA, predictedPriceLSTM, price }) {
+        let linearSummary = '';
+        if (predictedPrice && price) {
+            if (predictedPrice > price) {
+                linearSummary = `The token has been showing a steady upward trend. If this continues, the price could reach $${predictedPrice.toFixed(8)} soon.`;
+            } else if (predictedPrice < price) {
+                linearSummary = `Our analysis suggests the token is moving in a consistent downward trend. The price might fall towards $${predictedPrice.toFixed(8)} if this persists.`;
+            } else {
+                linearSummary = `The token price appears stable with no significant trend.`;
+            }
+        }
+        let polySummary = '';
+        if (predictedPricePolynomial && price) {
+            if (predictedPricePolynomial > price) {
+                polySummary = `The token price recently dipped but shows signs of a recovery. Our model suggests it may rise again towards $${predictedPricePolynomial.toFixed(8)}.`;
+            } else if (predictedPricePolynomial < price) {
+                polySummary = `The price has been rising but could experience a short-term peak before settling around $${predictedPricePolynomial.toFixed(8)}.`;
+            }
+        }
+        let emaSummary = '';
+        if (predictedPriceEMA && price) {
+            if (predictedPriceEMA > price) {
+                emaSummary = `Recent activity shows strong upward momentum. The token price could see a short-term increase if the trend continues.`;
+            } else if (predictedPriceEMA < price) {
+                emaSummary = `The token’s recent momentum is shifting downward, indicating potential short-term weakness.`;
+            } else {
+                emaSummary = `Short-term momentum is flat.`;
+            }
+        }
+        let arimaSummary = '';
+        if (predictedPriceARIMA && price) {
+            if (predictedPriceARIMA > price) {
+                arimaSummary = `ARIMA model suggests a possible upward move to $${predictedPriceARIMA.toFixed(8)}.`;
+            } else if (predictedPriceARIMA < price) {
+                arimaSummary = `ARIMA model suggests a possible downward move to $${predictedPriceARIMA.toFixed(8)}.`;
+            }
+        }
+        let lstmSummary = '';
+        if (predictedPriceLSTM && price) {
+            if (predictedPriceLSTM > price) {
+                lstmSummary = `LSTM model predicts a potential increase to $${predictedPriceLSTM.toFixed(8)} in the near future.`;
+            } else if (predictedPriceLSTM < price) {
+                lstmSummary = `LSTM model predicts a possible decrease to $${predictedPriceLSTM.toFixed(8)} soon.`;
+            }
+        }
+        return [
+            linearSummary,
+            polySummary,
+            emaSummary,
+            arimaSummary,
+            lstmSummary
+        ].filter(Boolean).join(' ');
+    }
     // Updated handleSendMessage to use keyword matching and bet advice
     const handleSendMessage = async ()=>{
         if (!inputValue.trim()) return;
@@ -169,7 +223,15 @@ function ChatInterface() {
                 const advice = await fetchBetAdvice(token);
                 botMessage = {
                     id: (Date.now() + 2).toString(),
-                    text: `You want to ${action} ${token}.\n` + (advice.price ? `Current price: $${advice.price.toFixed(8)}\n` : '') + `Here's my analysis of your bet:\n\n` + ` Trend (7d): ${advice.trendAdvice}\n` + (advice.predictedPrice ? `Prediction (Linear): $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction (Linear): Not enough data.\n') + (advice.predictedPricePolynomial ? `Prediction (Poly): $${advice.predictedPricePolynomial.toFixed(8)}\n` : 'Prediction (Poly): Not enough data.\n') + (advice.predictedPriceEMA ? `Prediction (EMA): $${advice.predictedPriceEMA.toFixed(8)}\n` : 'Prediction (EMA): Not enough data.\n') + ` Sentiment: ${advice.sentimentAdvice}`,
+                    text: `You want to ${action} ${token}.\n` + (advice.price ? `Current price: $${advice.price.toFixed(8)}\n` : '') + `Here's my analysis of your bet:\n\n` + (!advancedMode ? getPredictionSummary({
+                        trendAdvice: advice.trendAdvice,
+                        predictedPrice: advice.predictedPrice,
+                        predictedPricePolynomial: advice.predictedPricePolynomial,
+                        predictedPriceEMA: advice.predictedPriceEMA,
+                        predictedPriceARIMA: advice.predictedPriceARIMA,
+                        predictedPriceLSTM: advice.predictedPriceLSTM,
+                        price: advice.price
+                    }) + '\n' : (advice.predictedPrice ? `Prediction (Linear Regress): $${advice.predictedPrice.toFixed(8)}\n` : 'Prediction (Linear): Not enough data.\n') + (advice.predictedPricePolynomial ? `Prediction (Poly): $${advice.predictedPricePolynomial.toFixed(8)}\n` : 'Prediction (Poly): Not enough data.\n') + (advice.predictedPriceEMA ? `Prediction (EMA): $${advice.predictedPriceEMA.toFixed(8)}\n` : 'Prediction (EMA): Not enough data.\n') + (advice.predictedPriceARIMA ? `Prediction (ARIMA): $${advice.predictedPriceARIMA.toFixed(8)}\n` : 'Prediction (ARIMA): Not enough data.\n') + (advice.predictedPriceLSTM ? `Prediction (LSTM): $${advice.predictedPriceLSTM.toFixed(8)}\n` : 'Prediction (LSTM): Not enough data.\n')) + ` Sentiment: ${advice.sentimentAdvice}`,
                     sender: 'bot',
                     timestamp: new Date()
                 };
@@ -224,12 +286,12 @@ function ChatInterface() {
                                 className: "w-6 h-6 text-white"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/landing/page.tsx",
-                                lineNumber: 177,
+                                lineNumber: 255,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 176,
+                            lineNumber: 254,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -239,7 +301,7 @@ function ChatInterface() {
                                     children: "I am your Prediction companion🦾"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 180,
+                                    lineNumber: 258,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -247,24 +309,51 @@ function ChatInterface() {
                                     children: "Are you ready to take a bet?"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 181,
+                                    lineNumber: 259,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 179,
+                            lineNumber: 257,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/landing/page.tsx",
-                    lineNumber: 175,
+                    lineNumber: 253,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/landing/page.tsx",
-                lineNumber: 174,
+                lineNumber: 252,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "max-w-4xl mx-auto w-full flex justify-end items-center mt-2 mb-1 pr-4",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                    className: "flex items-center gap-2 text-sm text-purple-200 cursor-pointer select-none",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                            type: "checkbox",
+                            checked: advancedMode,
+                            onChange: ()=>setAdvancedMode((v)=>!v),
+                            className: "accent-purple-500"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/landing/page.tsx",
+                            lineNumber: 266,
+                            columnNumber: 11
+                        }, this),
+                        "Advanced Mode"
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/landing/page.tsx",
+                    lineNumber: 265,
+                    columnNumber: 9
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/src/app/landing/page.tsx",
+                lineNumber: 264,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -284,7 +373,7 @@ function ChatInterface() {
                                                     className: "w-5 h-5 text-emerald-200 mt-0.5 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 203,
+                                                    lineNumber: 293,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -295,7 +384,7 @@ function ChatInterface() {
                                                             children: message.text
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/landing/page.tsx",
-                                                            lineNumber: 206,
+                                                            lineNumber: 296,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -306,36 +395,36 @@ function ChatInterface() {
                                                             }) : ''
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/landing/page.tsx",
-                                                            lineNumber: 207,
+                                                            lineNumber: 297,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 205,
+                                                    lineNumber: 295,
                                                     columnNumber: 19
                                                 }, this),
                                                 message.sender === 'user' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
                                                     className: "w-5 h-5 text-purple-200 mt-0.5 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/landing/page.tsx",
-                                                    lineNumber: 212,
+                                                    lineNumber: 302,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/landing/page.tsx",
-                                            lineNumber: 201,
+                                            lineNumber: 291,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 194,
+                                        lineNumber: 284,
                                         columnNumber: 15
                                     }, this)
                                 }, message.id, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 190,
+                                    lineNumber: 280,
                                     columnNumber: 13
                                 }, this)),
                             isLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -349,7 +438,7 @@ function ChatInterface() {
                                                 className: "w-5 h-5 text-emerald-200"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/landing/page.tsx",
-                                                lineNumber: 223,
+                                                lineNumber: 313,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -359,7 +448,7 @@ function ChatInterface() {
                                                         className: "w-2 h-2 bg-emerald-200 rounded-full animate-bounce"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 225,
+                                                        lineNumber: 315,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -369,7 +458,7 @@ function ChatInterface() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 226,
+                                                        lineNumber: 316,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -379,35 +468,35 @@ function ChatInterface() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/landing/page.tsx",
-                                                        lineNumber: 227,
+                                                        lineNumber: 317,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/landing/page.tsx",
-                                                lineNumber: 224,
+                                                lineNumber: 314,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 222,
+                                        lineNumber: 312,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 221,
+                                    lineNumber: 311,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/landing/page.tsx",
-                                lineNumber: 220,
+                                lineNumber: 310,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/landing/page.tsx",
-                        lineNumber: 188,
+                        lineNumber: 278,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -427,12 +516,12 @@ function ChatInterface() {
                                         disabled: isLoading
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 239,
+                                        lineNumber: 329,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 238,
+                                    lineNumber: 328,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -443,35 +532,35 @@ function ChatInterface() {
                                         className: "w-5 h-5"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/landing/page.tsx",
-                                        lineNumber: 254,
+                                        lineNumber: 344,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/landing/page.tsx",
-                                    lineNumber: 249,
+                                    lineNumber: 339,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/landing/page.tsx",
-                            lineNumber: 237,
+                            lineNumber: 327,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/landing/page.tsx",
-                        lineNumber: 236,
+                        lineNumber: 326,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/landing/page.tsx",
-                lineNumber: 187,
+                lineNumber: 277,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/landing/page.tsx",
-        lineNumber: 172,
+        lineNumber: 250,
         columnNumber: 5
     }, this);
 }
