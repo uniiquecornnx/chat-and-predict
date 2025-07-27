@@ -90,7 +90,6 @@ export default function ChatInterface() {
   }
 
   function getPredictionSummary({
-    trendAdvice,
     predictedPrice,
     predictedPricePolynomial,
     predictedPriceEMA,
@@ -98,7 +97,6 @@ export default function ChatInterface() {
     predictedPriceLSTM,
     price
   }: {
-    trendAdvice: string,
     predictedPrice?: number | null,
     predictedPricePolynomial?: number | null,
     predictedPriceEMA?: number | null,
@@ -191,7 +189,6 @@ export default function ChatInterface() {
             `Here's my analysis of your bet:\n\n` +
             (!advancedMode
               ? getPredictionSummary({
-                  trendAdvice: advice.trendAdvice,
                   predictedPrice: advice.predictedPrice,
                   predictedPricePolynomial: advice.predictedPricePolynomial,
                   predictedPriceEMA: advice.predictedPriceEMA,
